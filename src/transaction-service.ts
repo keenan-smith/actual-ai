@@ -9,6 +9,7 @@ import { isFeatureEnabled } from './config';
 import CategorySuggester from './transaction/category-suggester';
 import BatchTransactionProcessor from './transaction/batch-transaction-processor';
 import TransactionFilterer from './transaction/transaction-filterer';
+import TransactionContextProvider from './context/transaction-context';
 
 class TransactionService implements TransactionServiceI {
   private readonly actualApiService: ActualApiServiceI;
@@ -21,18 +22,22 @@ class TransactionService implements TransactionServiceI {
 
   private readonly isDryRun: boolean;
 
+  private readonly contextProvider?: TransactionContextProvider;
+
   constructor(
     actualApiClient: ActualApiServiceI,
     categorySuggester: CategorySuggester,
     transactionProcessor: BatchTransactionProcessor,
     transactionFilterer: TransactionFilterer,
     isDryRun: boolean,
+    contextProvider?: TransactionContextProvider,
   ) {
     this.actualApiService = actualApiClient;
     this.categorySuggester = categorySuggester;
     this.transactionProcessor = transactionProcessor;
     this.transactionFilterer = transactionFilterer;
     this.isDryRun = isDryRun;
+    this.contextProvider = contextProvider;
   }
 
   async processTransactions(): Promise<void> {
@@ -62,6 +67,8 @@ class TransactionService implements TransactionServiceI {
       console.log('No uncategorized transactions to process');
       return;
     }
+
+    this.contextProvider?.setHistory(transactions, payees, categoryGroups);
 
     // Track suggested new categories
     const suggestedCategories = new Map<string, {

@@ -71,7 +71,7 @@ describe('PromptGenerator', () => {
 
     return template({
       categoryGroups: safeCategoryGroups,
-      amount: Math.abs(transaction.amount),
+      amount: (Math.abs(transaction.amount) / 100).toFixed(2),
       type: transaction.amount > 0 ? 'Income' : 'Outcome',
       description: transaction.notes ?? '',
       payee: payees.find((p) => p.id === transaction.payee)?.name ?? '',
@@ -162,7 +162,7 @@ ANSWER BY A CATEGORY ID - DO NOT CREATE ENTIRE SENTENCE - DO NOT WRITE CATEGORY 
 
     // Check for transaction details
     expect(prompt).toContain('Transaction details:');
-    expect(prompt).toContain('* Amount: 1000');
+    expect(prompt).toContain('* Amount: 10.00');
     expect(prompt).toContain('* Type: Outcome');
     expect(prompt).toContain('* Date: 2021-01-01');
   });

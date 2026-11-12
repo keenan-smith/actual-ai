@@ -14,6 +14,16 @@ Transaction details:
 {{#if date}}
 * Date: {{date}}
 {{/if}}
+{{#if merchantInfo}}
+
+What a web search found about this merchant:
+{{{merchantInfo}}}
+{{/if}}
+{{#if history}}
+
+History for this merchant (weigh it heavily: past categories reflect how this budget is organized, but check that the amount and description still fit):
+{{{history}}}
+{{/if}}
 
 Existing categories by group:
 {{#each categoryGroups}}

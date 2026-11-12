@@ -54,6 +54,8 @@ export const groqApiKey = process.env.GROQ_API_KEY ?? '';
 export const groqModel = process.env.GROQ_MODEL ?? 'llama-3.3-70b-versatile';
 export const groqBaseURL = process.env.GROQ_BASE_URL ?? 'https://api.groq.com/openai/v1';
 export const valueSerpApiKey = process.env.VALUESERP_API_KEY ?? '';
+// Outside dataDir so lookups (billed per search) survive restarts when this path is a volume.
+export const merchantCacheFile = process.env.MERCHANT_CACHE_FILE ?? './data/merchant-cache.json';
 
 // Optional per-deployment overrides for LLM rate limits.
 // `null` → use provider default; `0` → disable that axis; `>0` → custom limit.
@@ -131,6 +133,18 @@ function registerStandardFeatures() {
     enabled: enabledFeatures.includes('syncAccountsBeforeClassify') || process.env.SYNC_ACCOUNTS_BEFORE_CLASSIFY === 'true',
     defaultValue: false,
     description: 'Sync accounts before running classification',
+  };
+
+  features.transactionHistory = {
+    enabled: enabledFeatures.includes('transactionHistory'),
+    defaultValue: false,
+    description: 'Add past transactions from similar merchants, amount and recurrence hints to the prompt',
+  };
+
+  features.merchantLookup = {
+    enabled: enabledFeatures.includes('merchantLookup'),
+    defaultValue: false,
+    description: 'Look up unfamiliar merchants with OpenRouter web search and add the result to the prompt',
   };
 
   features.disableRateLimiter = {

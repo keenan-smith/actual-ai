@@ -8,6 +8,7 @@ import {
 import {
   TransactionEntity, RuleEntity, CategoryEntity, CategoryGroupEntity,
 } from '@actual-app/core/src/types/models';
+import type { TransactionContext } from './context/transaction-context';
 
 export type APICategoryEntity = ImportedAPICategoryEntity | CategoryEntity;
 export type APICategoryGroupEntity = ImportedAPICategoryGroupEntity | CategoryGroupEntity;
@@ -110,6 +111,7 @@ export interface PromptGeneratorI {
     transaction: TransactionEntity,
     payees: APIPayeeEntity[],
     rules: RuleEntity[],
+    context?: TransactionContext,
   ): string;
 }
 

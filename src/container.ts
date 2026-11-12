@@ -20,6 +20,7 @@ import {
   guessedTag,
   isFeatureEnabled,
   llmProvider,
+  merchantCacheFile,
   llmTimeoutMs,
   llmTemperature,
   notGuessedTag,
@@ -63,6 +64,8 @@ import BatchTransactionProcessor from './transaction/batch-transaction-processor
 import TransactionProcessor from './transaction/transaction-processor';
 import TransactionFilterer from './transaction/transaction-filterer';
 import RateLimiter from './utils/rate-limiter';
+import TransactionContextProvider from './context/transaction-context';
+import MerchantLookupService from './context/merchant-lookup';
 
 // Create tool service if API key is available and tools are enabled
 export function createToolService(): ToolService | undefined {
@@ -134,6 +137,25 @@ const llmService = new LlmService(
 
 const tagService = new TagService(notGuessedTag, guessedTag);
 
+function createMerchantLookup(): MerchantLookupService | undefined {
+  if (!isFeatureEnabled('merchantLookup')) return undefined;
+  if (!openrouterApiKey) {
+    console.warn('merchantLookup needs OPENROUTER_API_KEY (it uses OpenRouter web search); disabled');
+    return undefined;
+  }
+  return new MerchantLookupService(
+    openrouterApiKey,
+    openrouterModel,
+    openrouterBaseURL,
+    merchantCacheFile,
+  );
+}
+
+const merchantLookup = createMerchantLookup();
+const contextProvider = isFeatureEnabled('transactionHistory') || merchantLookup
+  ? new TransactionContextProvider(guessedTag, isFeatureEnabled('transactionHistory'), merchantLookup)
+  : undefined;
+
 const ruleMatchStrategy = new RuleMatchStrategy(actualApiService, tagService);
 const existingCategoryStrategy = new ExistingCategoryStrategy(
   actualApiService,
@@ -154,6 +176,7 @@ const transactionProcessor = new TransactionProcessor(
   promptGenerator,
   tagService,
   [ruleMatchStrategy, existingCategoryStrategy, newCategoryStrategy],
+  contextProvider,
 );
 
 const batchTransactionProcessor = new BatchTransactionProcessor(
@@ -169,6 +192,7 @@ const transactionService = new TransactionService(
   batchTransactionProcessor,
   transactionFilterer,
   isDryRun,
+  contextProvider,
 );
 
 const actualAi = new ActualAiService(

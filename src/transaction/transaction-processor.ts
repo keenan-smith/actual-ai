@@ -9,6 +9,7 @@ import {
   PromptGeneratorI,
 } from '../types';
 import TagService from './tag-service';
+import TransactionContextProvider from '../context/transaction-context';
 
 class TransactionProcessor {
   private readonly actualApiService: ActualApiServiceI;
@@ -21,18 +22,22 @@ class TransactionProcessor {
 
   private readonly processingStrategies: ProcessingStrategyI[];
 
+  private readonly contextProvider?: TransactionContextProvider;
+
   constructor(
     actualApiClient: ActualApiServiceI,
     llmService: LlmServiceI,
     promptGenerator: PromptGeneratorI,
     tagService: TagService,
     processingStrategies: ProcessingStrategyI[],
+    contextProvider?: TransactionContextProvider,
   ) {
     this.actualApiService = actualApiClient;
     this.llmService = llmService;
     this.promptGenerator = promptGenerator;
     this.tagService = tagService;
     this.processingStrategies = processingStrategies;
+    this.contextProvider = contextProvider;
   }
 
   public async process(
@@ -50,11 +55,13 @@ class TransactionProcessor {
       }>,
   ): Promise<void> {
     try {
+      const context = await this.contextProvider?.getContext(transaction, payees);
       const prompt = this.promptGenerator.generate(
         categoryGroups,
         transaction,
         payees,
         rules,
+        context,
       );
 
       const response = await this.llmService.ask(prompt);

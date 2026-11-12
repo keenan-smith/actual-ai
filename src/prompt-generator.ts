@@ -7,6 +7,7 @@ import {
 import PromptTemplateException from './exceptions/prompt-template-exception';
 import { isToolEnabled } from './config';
 import { transformRulesToDescriptions } from './utils/rule-utils';
+import { formatAmount, TransactionContext } from './context/transaction-context';
 
 class PromptGenerator implements PromptGeneratorI {
   private readonly promptTemplate: string;
@@ -22,6 +23,7 @@ class PromptGenerator implements PromptGeneratorI {
     transaction: TransactionEntity,
     payees: APIPayeeEntity[],
     rules: RuleEntity[],
+    context?: TransactionContext,
   ): string {
     let template;
     try {
@@ -50,7 +52,7 @@ class PromptGenerator implements PromptGeneratorI {
       return template({
         categoryGroups: groupsWithCategories,
         rules: rulesDescription,
-        amount: Math.abs(transaction.amount),
+        amount: formatAmount(Math.abs(transaction.amount)),
         type: transaction.amount > 0 ? 'Income' : 'Outcome',
         description: transaction.notes ?? '',
         payee: payeeName ?? '',
@@ -59,6 +61,8 @@ class PromptGenerator implements PromptGeneratorI {
         cleared: transaction.cleared,
         reconciled: transaction.reconciled,
         hasWebSearchTool: webSearchEnabled,
+        history: context?.history ?? '',
+        merchantInfo: context?.merchantInfo ?? '',
       });
     } catch {
       console.error('Error generating prompt. Check syntax of your template.');
